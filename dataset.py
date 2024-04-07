@@ -1,4 +1,5 @@
 import os
+from PIL import Image
 
 import torch
 from torch.utils.data import Dataset
@@ -19,7 +20,6 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx) -> tuple[torch.Tensor, None]:
         img_path = os.path.join(self.img_dir, self.img_list[idx])
-        image = read_image(img_path)
+        image = Image.open(img_path).convert('RGB')
         image = self.preprocess(image)
-        return image, None
-        
+        return image

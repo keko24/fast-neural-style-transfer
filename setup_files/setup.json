@@ -1,7 +1,7 @@
 {
     "batch_size": 1,
-    "epochs": 300,
-    "lr": 1,
-    "alpha": 10e0,
-    "beta": 10e4
+    "epochs": 1,
+    "lr": 10e3,
+    "content_weight": 10e0,
+    "style_weight": 10e4
 }

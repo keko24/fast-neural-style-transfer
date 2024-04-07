@@ -15,7 +15,8 @@ class LossNetwork(nn.Module):
         self.content_losses = []
         for curr_layer in range(content_layer + 1):
             self.content_extractor.add_module(str(curr_layer), vgg[curr_layer])
-        content_loss = ContentLoss(style)
+        content = self.content_extractor(style)
+        content_loss = ContentLoss(content)
         self.content_extractor.add_module("content_loss", content_loss)
         self.content_losses.append(content_loss)
 
@@ -26,8 +27,9 @@ class LossNetwork(nn.Module):
             layer_subset = nn.Sequential()
             for curr_layer in range(start_layer, end_layer + 1):
                 layer_subset.add_module(str(curr_layer), vgg[curr_layer])
+            style = layer_subset(style)
             style_loss = StyleLoss(style)
-            self.layer_subset.add_module(f"style_loss_{i + 1}", style_loss)
+            layer_subset.add_module(f"style_loss_{i + 1}", style_loss)
             self.style_losses.append(style_loss)
             self.style_extractor.append(layer_subset)
 
@@ -37,20 +39,21 @@ class LossNetwork(nn.Module):
         self.content_extractor[-1] = content_loss
         self.content_losses.append(content_loss)
 
-    def forward(self, input, content):
+    def forward(self, inputs, content):
+        content = self.content_extractor(content)
         content_loss = ContentLoss(content)
         self.content_extractor[-1] = content_loss
         self.content_losses[-1] = content_loss
-        content_feature_maps = self.content_extractor(input)
+        content_feature_maps = self.content_extractor(inputs)
         style_feature_maps = [] 
         for style_layer in self.style_extractor:
-            input = style_layer(input)
-            style_feature_maps.append(input)
+            inputs = style_layer(inputs)
+            style_feature_maps.append(inputs)
         return {"content": content_feature_maps, "style": style_feature_maps}
 
-def compute_gram_matrix(input):
-    batch_size, cnn_channels, height, width = input.size()
-    features = input.view(batch_size, cnn_channels, height * width)
+def compute_gram_matrix(inputs):
+    batch_size, cnn_channels, height, width = inputs.size()
+    features = inputs.view(batch_size, cnn_channels, height * width)
     return features.bmm(features.transpose(1, 2)).div(cnn_channels * height * width)
 
 class ContentLoss(nn.Module):

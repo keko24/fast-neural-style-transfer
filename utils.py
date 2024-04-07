@@ -3,7 +3,7 @@ import json
 import os
 
 def get_project_root() -> Path:
-    return Path(__file__)
+    return Path(__file__).parent
 
 def load_json(path: str):
     if os.path.exists(path) and path.endswith('.json'):

@@ -4,7 +4,7 @@ from torchvision import transforms
 
 class Preprocess(nn.Module):
     def __init__(self) -> None:
-        super(Preprocess).__init__()
+        super(Preprocess, self).__init__()
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
         self.preprocess = transforms.Compose([
@@ -13,5 +13,5 @@ class Preprocess(nn.Module):
             transforms.Normalize(mean, std)
         ])
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        return self.preprocess(input)
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        return self.preprocess(inputs)
