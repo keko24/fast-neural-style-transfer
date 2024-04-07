@@ -1,0 +1,7 @@
+{
+    "batch_size": 1,
+    "epochs": 300,
+    "lr": 1,
+    "alpha": 10e0,
+    "beta": 10e4
+}

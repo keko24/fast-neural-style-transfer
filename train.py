@@ -1,16 +1,18 @@
 import torch
 
-class Trainer(object):
-    def __init__(self, model, loss_network, optimizer, DEVICE):
+class Trainer:
+    def __init__(self, data, model, loss_network, optimizer, setup, DEVICE) -> None:
         super(Trainer, self).__init__()
         self.DEVICE = DEVICE
+        self.data = data
         self.model = model
         self.optimizer = optimizer
         self.loss_network = loss_network
+        self.setup = setup
 
-    def train(self, setup):
-        for epoch in setup["epochs"]:
-            train_loader = self.train_data()
+    def train(self) -> None:
+        for epoch in self.setup["epochs"]:
+            train_loader = self.data.train_data()
             y_pred_total = []
             y_total = []
             train_loss = 0
@@ -25,12 +27,12 @@ class Trainer(object):
                 content_loss = torch.zeros(1, device=self.DEVICE, dtype=torch.float)
                 for cl in self.loss_network.style_losses:
                     content_loss += cl
-                content_loss *= setup["content_weight"]
+                content_loss *= self.setup["content_weight"]
 
                 style_loss = torch.zeros(1, device=self.DEVICE, dtype=torch.float)
                 for sl in self.loss_network.style_losses:
                     style_loss += sl
-                style_loss *= setup["style_weight"]
+                style_loss *= self.setup["style_weight"]
                 
                 loss = content_loss + style_loss
                 loss.backward()

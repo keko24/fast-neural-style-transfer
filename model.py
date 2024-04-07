@@ -1,11 +1,11 @@
 from torch import nn
 
-class Model(nn.Module):
+class TransformationNetwork(nn.Module):
     def __init__(self):
-        super(Model, self).__init__()
+        super(TransformationNetwork, self).__init__()
         kernel_9 = (9, 9)
         kernel = (3, 3)
-        self.num_residual_blocks = 3
+        self.num_residual_blocks = 5
         self.convolutional_downsampling = nn.Sequential(
             nn.Conv2d(3, 32, kernel_9, stride=1),
             nn.BatchNorm2d(32),
@@ -13,7 +13,7 @@ class Model(nn.Module):
             nn.Conv2d(32, 64, kernel, stride=2),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.Conv2d(64, 128, kernel, stride=1),
+            nn.Conv2d(64, 128, kernel, stride=2),
             nn.BatchNorm2d(128),
             nn.ReLU()
         )
@@ -25,12 +25,10 @@ class Model(nn.Module):
             nn.BatchNorm2d(128),
         )
         self.convolutional_upsampling = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(128, 64, kernel),
+            nn.ConvTranspose2d(128, 64, kernel, stride=2),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(64, 32, kernel),
+            nn.ConvTranspose2d(64, 32, kernel, stride=2),
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 3, kernel_9),
