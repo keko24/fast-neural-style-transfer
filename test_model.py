@@ -1,7 +1,9 @@
 import os
 import torch
-from torchvision.io import read_image
 from PIL import Image
+
+from torchvision.transforms.functional import to_pil_image
+from torchvision.io import read_image
 
 from data_loader import ImageDataLoader
 from model import TransformationNetwork
@@ -49,5 +51,9 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=setup["lr"])
     trainer = Trainer(data, model, loss_network, optimizer, setup, DEVICE)
     trainer.train()
-    os.makedirs(paths["results_path"])
-    torch.save(model.state_dict(), os.path.join(paths["results_path"], "model.pt")) 
+    style = style.detach().cpu().squeeze(0)
+    style = to_pil_image(style)
+    style.save(os.path.join("results", "style.jpg"))
+    if not os.path.exists(paths["results_path"]):
+        os.makedirs(paths["results_path"])
+    torch.save(model.state_dict(), os.path.join(paths["results_path"], "model.pt"))

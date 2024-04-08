@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from torch.nn.functional import mse_loss
 from torchvision.models import vgg16
@@ -32,12 +33,6 @@ class LossNetwork(nn.Module):
             layer_subset.add_module(f"style_loss_{i + 1}", style_loss)
             self.style_losses.append(style_loss)
             self.style_extractor.append(layer_subset)
-
-    def setup_content(self, content):
-        self.content_losses = []
-        content_loss = ContentLoss(content)
-        self.content_extractor[-1] = content_loss
-        self.content_losses.append(content_loss)
 
     def forward(self, inputs, content):
         content = self.content_extractor(content)
@@ -74,3 +69,8 @@ class StyleLoss(nn.Module):
         gram_matrix = compute_gram_matrix(x)
         self.loss = mse_loss(gram_matrix, self.target)
         return x
+
+def calculate_total_variation_loss(inputs):
+    tv_height = torch.sum(torch.square(inputs[:, :, 1:, :] - inputs[:, :, :-1, :]))
+    tv_width = torch.sum(torch.square(inputs[:, :, :, 1:] - inputs[:, :, :, :-1]))
+    return tv_width + tv_height
