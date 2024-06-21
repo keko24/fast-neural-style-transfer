@@ -1,50 +1,82 @@
 import torch
+
 from torch import nn
 from torch.nn.functional import mse_loss
 from torchvision.models import vgg16
+from torchvision import transforms
 
-class LossNetwork(nn.Module):
-    def __init__(self, style, DEVICE):
-        super(LossNetwork, self).__init__()
-        vgg = vgg16().features.eval().to(DEVICE)
+class ContentAndStyleExtractor(nn.Module):
+    def __init__(self, content: int, style: list[int], DEVICE):
+        super(ContentAndStyleExtractor, self).__init__()
+        style_layers = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"]
+        content_layers = ["relu2_2"]
+        
+        style_layers.sort()
+
+        vgg = vgg16(weights='DEFAULT').features.eval().to(DEVICE)
+        vgg.requires_grad_(False)
         for parameter in vgg.parameters():
             parameter.requires_grad_(False)
-        style_layers = [3, 8, 15, 22]
-        content_layer = 15
-
-        self.content_extractor = nn.Sequential()
-        self.content_losses = []
-        for curr_layer in range(content_layer + 1):
-            self.content_extractor.add_module(str(curr_layer), vgg[curr_layer])
-        content = self.content_extractor(style)
-        content_loss = ContentLoss(content)
-        self.content_extractor.add_module("content_loss", content_loss)
-        self.content_losses.append(content_loss)
-
-        self.style_extractor = nn.ModuleList()
+        
         self.style_losses = []
-        for i, end_layer in enumerate(style_layers):
-            start_layer = 0 if i == 0 else style_layers[i - 1] + 1
-            layer_subset = nn.Sequential()
-            for curr_layer in range(start_layer, end_layer + 1):
-                layer_subset.add_module(str(curr_layer), vgg[curr_layer])
-            style = layer_subset(style)
-            style_loss = StyleLoss(style)
-            layer_subset.add_module(f"style_loss_{i + 1}", style_loss)
-            self.style_losses.append(style_loss)
-            self.style_extractor.append(layer_subset)
+        self.content_losses = []
 
-    def forward(self, inputs, content):
-        content = self.content_extractor(content)
-        content_loss = ContentLoss(content)
-        self.content_extractor[-1] = content_loss
-        self.content_losses[-1] = content_loss
-        content_feature_maps = self.content_extractor(inputs)
-        style_feature_maps = [] 
-        for style_layer in self.style_extractor:
-            inputs = style_layer(inputs)
-            style_feature_maps.append(inputs)
-        return {"content": content_feature_maps, "style": style_feature_maps}
+        # self.normalize = Normalize()
+        self.model = nn.Sequential() # nn.Sequential(self.normalize)
+
+        pool_idx, conv_idx, relu_idx, bn_idx, style_loss_idx, content_loss_idx = (1, 1, 1, 1, 1, 1)
+        for layer in vgg.children():
+            if isinstance(layer, nn.MaxPool2d):
+                name = f"pool_{pool_idx}"
+                layer = nn.AvgPool2d(kernel_size=layer.kernel_size, stride=layer.stride, padding=layer.padding, ceil_mode=layer.ceil_mode)
+                pool_idx += 1
+                relu_idx, conv_idx, bn_idx = (1, 1, 1)
+            elif isinstance(layer, nn.Conv2d):
+                name = f"conv{pool_idx}_{conv_idx}"
+                conv_idx += 1
+            elif isinstance(layer, nn.ReLU):
+                name = f"relu{pool_idx}_{relu_idx}"
+                layer = nn.ReLU(inplace=False)
+                relu_idx += 1
+            elif isinstance(layer, nn.BatchNorm2d):
+                name = f"bn_{pool_idx}_{bn_idx}"
+                bn_idx += 1
+            else:
+                raise RuntimeError('Unrecognized layer: {}'.format(layer.__class__.__name__))
+
+            self.model.add_module(name, layer)
+
+            if name in style_layers:
+                target_style = self.model(style).detach()
+                style_loss = StyleLoss(target_style)
+                self.model.add_module(f"style_loss_{style_loss_idx}", style_loss) 
+                self.style_losses.append(style_loss)
+                style_loss_idx += 1
+
+            if name in content_layers:
+                target_style = self.model(content).detach()
+                content_loss = ContentLoss(target_style)
+                self.model.add_module(f"content_loss_{content_loss_idx}", content_loss) 
+                self.content_losses.append(content_loss)
+                content_loss_idx += 1
+
+        for i in range(len(self.model) - 1, -1, -1):
+            if isinstance(self.model[i], StyleLoss) or isinstance(self.model[i], ContentLoss):
+                self.model = self.model[:(i + 1)]
+                break
+
+    def forward(self, x):
+        return self.model(x)
+
+class Normalize(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()  
+        self.normalize = transforms.Compose([
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+
+    def forward(self, x):
+        return self.normalize(x)
 
 def compute_gram_matrix(inputs):
     batch_size, cnn_channels, height, width = inputs.size()

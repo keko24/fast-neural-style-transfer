@@ -21,7 +21,6 @@ class Trainer:
             train_loss = 0
             self.model.train()
             epoch_start_time = time.time()
-            dataset_length = len(train_loader.dataset)
             for img_idx, sample in tqdm(enumerate(train_loader)):
                 inputs = sample.to(self.DEVICE)
             
@@ -29,12 +28,12 @@ class Trainer:
                 y_pred = self.model(inputs)
                 self.loss_network(y_pred, inputs)
                 
-                content_loss = torch.zeros(1, device=self.DEVICE, dtype=torch.float)
+                content_loss = 0
                 for cl in self.loss_network.style_losses:
                     content_loss += cl.loss
                 content_loss *= self.setup["content_weight"]
 
-                style_loss = torch.zeros(1, device=self.DEVICE, dtype=torch.float)
+                style_loss = 0
                 for sl in self.loss_network.style_losses:
                     style_loss += sl.loss
                 style_loss *= self.setup["style_weight"]
