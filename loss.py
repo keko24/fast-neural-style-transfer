@@ -6,7 +6,7 @@ from torchvision.models import vgg16
 from torchvision import transforms
 
 class ContentAndStyleExtractor(nn.Module):
-    def __init__(self, content: int, style: list[int], DEVICE):
+    def __init__(self, style, batch_size, DEVICE):
         super(ContentAndStyleExtractor, self).__init__()
         style_layers = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"]
         content_layers = ["relu2_2"]
@@ -15,8 +15,6 @@ class ContentAndStyleExtractor(nn.Module):
 
         vgg = vgg16(weights='DEFAULT').features.eval().to(DEVICE)
         vgg.requires_grad_(False)
-        for parameter in vgg.parameters():
-            parameter.requires_grad_(False)
         
         self.style_losses = []
         self.content_losses = []
@@ -47,15 +45,14 @@ class ContentAndStyleExtractor(nn.Module):
             self.model.add_module(name, layer)
 
             if name in style_layers:
-                target_style = self.model(style).detach()
+                target_style = self.model(torch.stack([style] * batch_size))
                 style_loss = StyleLoss(target_style)
                 self.model.add_module(f"style_loss_{style_loss_idx}", style_loss) 
                 self.style_losses.append(style_loss)
                 style_loss_idx += 1
 
             if name in content_layers:
-                target_style = self.model(content).detach()
-                content_loss = ContentLoss(target_style)
+                content_loss = ContentLoss(self.model.deepcopy())
                 self.model.add_module(f"content_loss_{content_loss_idx}", content_loss) 
                 self.content_losses.append(content_loss)
                 content_loss_idx += 1
@@ -65,8 +62,11 @@ class ContentAndStyleExtractor(nn.Module):
                 self.model = self.model[:(i + 1)]
                 break
 
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, inputs, content):
+        for style_loss in self.style_losses:
+            style_loss.set_targets(content)
+
+        return self.model(inputs)
 
 class Normalize(nn.Module):
     def __init__(self) -> None:
@@ -84,23 +84,26 @@ def compute_gram_matrix(inputs):
     return features.bmm(features.transpose(1, 2)).div(cnn_channels * height * width)
 
 class ContentLoss(nn.Module):
-    def __init__(self, target):
+    def __init__(self, model):
         super().__init__()
-        self.target = target.detach()
-    
-    def forward(self, x):
-        self.loss = mse_loss(x, self.target)
-        return x
+        self.model = model
+
+    def set_targets(self, targets):
+        self.targets = self.model(targets).detach()
+
+    def forward(self, inputs):
+        self.loss = mse_loss(inputs, self.targets)
+        return inputs
  
 class StyleLoss(nn.Module):
     def __init__(self, target):
         super().__init__()
         self.target = compute_gram_matrix(target).detach()
     
-    def forward(self, x):
-        gram_matrix = compute_gram_matrix(x)
+    def forward(self, inputs):
+        gram_matrix = compute_gram_matrix(inputs)
         self.loss = mse_loss(gram_matrix, self.target)
-        return x
+        return inputs
 
 def calculate_total_variation_loss(inputs):
     tv_height = torch.sum(torch.square(inputs[:, :, 1:, :] - inputs[:, :, :-1, :]))
