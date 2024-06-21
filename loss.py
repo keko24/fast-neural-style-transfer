@@ -6,8 +6,8 @@ from torchvision.models import vgg16
 from torchvision import transforms
 
 class LossNetwork(nn.Module):
-    def __init__(self, style, batch_size, DEVICE):
-        super(ContentAndStyleExtractor, self).__init__()
+    def __init__(self, style, DEVICE):
+        super().__init__()
         style_layers = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"]
         content_layers = ["relu2_2"]
         
@@ -45,8 +45,7 @@ class LossNetwork(nn.Module):
             self.model.add_module(name, layer)
 
             if name in style_layers:
-                target_style = self.model(torch.stack([style] * batch_size))
-                style_loss = StyleLoss(target_style)
+                style_loss = StyleLoss(style)
                 self.model.add_module(f"style_loss_{style_loss_idx}", style_loss) 
                 self.style_losses.append(style_loss)
                 style_loss_idx += 1

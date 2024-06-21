@@ -2,7 +2,7 @@ from torch import nn
 
 class TransformationNetwork(nn.Module):
     def __init__(self):
-        super(TransformationNetwork, self).__init__()
+        super().__init__()
         kernel_9 = (9, 9)
         kernel = (3, 3)
         self.num_residual_blocks = 5

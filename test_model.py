@@ -3,7 +3,6 @@ import torch
 from PIL import Image
 
 from torchvision.transforms.functional import to_pil_image
-from torchvision.io import read_image
 
 from data_loader import ImageDataLoader
 from model import TransformationNetwork
@@ -12,7 +11,8 @@ from train import Trainer
 from preprocess import Preprocess
 from utils import (
     get_project_root,
-    load_json
+    load_json,
+    load_image
 )
 
 if __name__ == "__main__":
@@ -41,10 +41,9 @@ if __name__ == "__main__":
     setup = load_json(paths["setup_path"])
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data = ImageDataLoader(paths)
-    style = Image.open(paths["style_path"])
-    #style = read_image(paths["style_path"])
+    style = load_image(paths["style_path"])
+    style = torch.stack([style] * setup["batch_size"]).to(DEVICE)
     transform = Preprocess()
-    style = transform(style).unsqueeze(0).to(DEVICE)
     model = TransformationNetwork()
     model.to(DEVICE)
     loss_network = LossNetwork(style, DEVICE)
