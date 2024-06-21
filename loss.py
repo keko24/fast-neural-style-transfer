@@ -5,7 +5,7 @@ from torch.nn.functional import mse_loss
 from torchvision.models import vgg16
 from torchvision import transforms
 
-class ContentAndStyleExtractor(nn.Module):
+class LossNetwork(nn.Module):
     def __init__(self, style, batch_size, DEVICE):
         super(ContentAndStyleExtractor, self).__init__()
         style_layers = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"]
