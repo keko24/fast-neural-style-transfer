@@ -1,9 +1,9 @@
 import time
+
 from tqdm import tqdm
 
-import torch
-
 from loss import calculate_total_variation_loss
+
 
 class Trainer:
     def __init__(self, data, model, loss_network, optimizer, setup, DEVICE) -> None:
@@ -23,11 +23,11 @@ class Trainer:
             epoch_start_time = time.time()
             for img_idx, sample in tqdm(enumerate(train_loader)):
                 inputs = sample.to(self.DEVICE)
-            
+
                 self.optimizer.zero_grad()
                 y_pred = self.model(inputs)
                 self.loss_network(y_pred, inputs)
-                
+
                 content_loss = 0
                 for cl in self.loss_network.style_losses:
                     content_loss += cl.loss
@@ -37,8 +37,10 @@ class Trainer:
                 for sl in self.loss_network.style_losses:
                     style_loss += sl.loss
                 style_loss *= self.setup["style_weight"]
-                
-                tv_loss = self.setup["tv_weight"] * calculate_total_variation_loss(y_pred)
+
+                tv_loss = self.setup["tv_weight"] * calculate_total_variation_loss(
+                    y_pred
+                )
 
                 loss = content_loss + style_loss + tv_loss
                 loss.backward()
@@ -49,7 +51,15 @@ class Trainer:
                     print("Training Loss: {:.8f}".format(loss.item()))
 
             epoch_end_time = int(time.time() - epoch_start_time)
-            print("Epoch: {}/{}.. ".format(epoch + 1, self.setup["epochs"]),
-              "Training Loss: {:.3f}".format(train_loss))
-            print('epoch {} end time: {:02d}:{:02d}:{:02d}'.format(epoch + 1, epoch_end_time // 3600, epoch_end_time % 3600 // 60, epoch_end_time % 60))
-            
+            print(
+                "Epoch: {}/{}.. ".format(epoch + 1, self.setup["epochs"]),
+                "Training Loss: {:.3f}".format(train_loss),
+            )
+            print(
+                "epoch {} end time: {:02d}:{:02d}:{:02d}".format(
+                    epoch + 1,
+                    epoch_end_time // 3600,
+                    epoch_end_time % 3600 // 60,
+                    epoch_end_time % 60,
+                )
+            )

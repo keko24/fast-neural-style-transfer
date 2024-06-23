@@ -1,8 +1,8 @@
 {
-    "batch_size": 1,
+    "batch_size": 4,
     "epochs": 1,
-    "lr": 10e-3,
-    "content_weight": 10e0,
-    "style_weight": 10e3,
-    "tv_weight": 10e-6
+    "lr": 0.01,
+    "content_weight": 10,
+    "style_weight": 10000,
+    "tv_weight": 0.00001
 }

@@ -1,11 +1,11 @@
 import os
-from PIL import Image
 
 import torch
+from PIL import Image
 from torchvision.transforms.functional import to_pil_image
 
-from preprocess import Preprocess
 from model import TransformationNetwork
+from preprocess import Preprocess
 
 if __name__ == "__main__":
     model = TransformationNetwork()

@@ -1,13 +1,11 @@
 import os
-from PIL import Image
 
 import torch
+from PIL import Image
 from torch.utils.data import Dataset
 
-from utils import (
-    load_image, 
-    listdir_nonhidden
-)
+from utils import listdir_nonhidden, load_image
+
 
 class ImageDataset(Dataset):
     def __init__(self, img_dir: str) -> None:

@@ -1,5 +1,6 @@
 from torch import nn
 
+
 class TransformationNetwork(nn.Module):
     def __init__(self):
         super().__init__()
@@ -15,13 +16,13 @@ class TransformationNetwork(nn.Module):
             nn.ReLU(),
             nn.Conv2d(64, 128, kernel, stride=2, padding=1),
             nn.BatchNorm2d(128),
-            nn.ReLU()
+            nn.ReLU(),
         )
         self.residual_block = nn.Sequential(
-            nn.Conv2d(128, 128, kernel, padding='same'),
+            nn.Conv2d(128, 128, kernel, padding="same"),
             nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.Conv2d(128, 128, kernel, padding='same'),
+            nn.Conv2d(128, 128, kernel, padding="same"),
             nn.BatchNorm2d(128),
         )
         self.convolutional_upsampling = nn.Sequential(
@@ -33,7 +34,7 @@ class TransformationNetwork(nn.Module):
             nn.ReLU(),
             nn.Conv2d(32, 3, kernel_9, stride=1, padding=4),
             nn.BatchNorm2d(3),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
     def forward(self, x):
