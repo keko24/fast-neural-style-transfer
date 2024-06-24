@@ -1,7 +1,6 @@
 import os
 
 import torch
-from PIL import Image
 from torchvision.transforms.functional import to_pil_image
 
 from data_loader import ImageDataLoader
@@ -22,6 +21,7 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data = ImageDataLoader(paths)
     style = load_style(paths["style_path"], setup["batch_size"], DEVICE)
+
     transform = Preprocess()
     model = TransformationNetwork()
     model.to(DEVICE)
@@ -29,7 +29,8 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=setup["lr"])
     trainer = Trainer(data, model, loss_network, optimizer, setup, DEVICE)
     trainer.train()
-    style = style[0].detach().cpu().squeeze(0)
+
+    style = style[0].detach().cpu().clone().squeeze(0)
     style = to_pil_image(style)
     os.makedirs(paths["results_path"], exist_ok=True)
     style.save(os.path.join("results", "style.jpg"))

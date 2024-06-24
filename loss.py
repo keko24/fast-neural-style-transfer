@@ -3,9 +3,8 @@ import copy
 import torch
 from torch import nn
 from torch.nn.functional import mse_loss
+from torchvision import transforms
 from torchvision.models import vgg16
-
-# from torchvision import transforms
 
 
 class LossNetwork(nn.Module):
@@ -22,8 +21,8 @@ class LossNetwork(nn.Module):
         self.style_losses = []
         self.content_losses = []
 
-        # self.normalize = Normalize()
-        self.model = nn.Sequential()  # nn.Sequential(self.normalize)
+        self.normalize = Normalize()
+        self.model = nn.Sequential(self.normalize)
 
         pool_idx, conv_idx, relu_idx, bn_idx = (1, 1, 1, 1)
         style_loss_idx, content_loss_idx = (1, 1)
@@ -86,15 +85,19 @@ class LossNetwork(nn.Module):
         return self.model(inputs)
 
 
-# class Normalize(nn.Module):
-#     def __init__(self) -> None:
-#         super().__init__()
-#         self.normalize = transforms.Compose([
-#             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-#         ])
-#
-#     def forward(self, x):
-#         return self.normalize(x)
+class Normalize(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.normalize = transforms.Compose(
+            [
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+    def forward(self, x):
+        return self.normalize(x)
 
 
 def compute_gram_matrix(inputs):
