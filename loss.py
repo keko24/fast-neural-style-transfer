@@ -21,8 +21,9 @@ class LossNetwork(nn.Module):
         self.style_losses = []
         self.content_losses = []
 
-        self.normalize = Normalize()
-        self.model = nn.Sequential(self.normalize)
+        # self.normalize = Normalize()
+        # self.model = nn.Sequential(self.normalize)
+        self.model = nn.Sequential()
 
         pool_idx, conv_idx, relu_idx, bn_idx = (1, 1, 1, 1)
         style_loss_idx, content_loss_idx = (1, 1)
