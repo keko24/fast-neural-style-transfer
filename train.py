@@ -6,7 +6,9 @@ from loss import calculate_total_variation_loss
 
 
 class Trainer:
-    def __init__(self, data, model, loss_network, optimizer, setup, DEVICE) -> None:
+    def __init__(
+        self, data, model, loss_network, optimizer, setup, DEVICE
+    ) -> None:
         super(Trainer, self).__init__()
         self.DEVICE = DEVICE
         self.data = data
@@ -29,7 +31,7 @@ class Trainer:
                 self.loss_network(y_pred, inputs)
 
                 content_loss = 0
-                for cl in self.loss_network.style_losses:
+                for cl in self.loss_network.content_losses:
                     content_loss += cl.loss
                 content_loss *= self.setup["content_weight"]
 
@@ -38,9 +40,9 @@ class Trainer:
                     style_loss += sl.loss
                 style_loss *= self.setup["style_weight"]
 
-                tv_loss = self.setup["tv_weight"] * calculate_total_variation_loss(
-                    y_pred
-                )
+                tv_loss = self.setup[
+                    "tv_weight"
+                ] * calculate_total_variation_loss(y_pred)
 
                 loss = content_loss + style_loss + tv_loss
                 loss.backward()

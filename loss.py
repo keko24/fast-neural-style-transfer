@@ -13,17 +13,15 @@ class LossNetwork(nn.Module):
         style_layers = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"]
         content_layers = ["relu2_2"]
 
-        style_layers.sort()
-
         vgg = vgg16(weights="DEFAULT").features.eval().to(DEVICE)
         vgg.requires_grad_(False)
 
         self.style_losses = []
         self.content_losses = []
 
-        # self.normalize = Normalize()
-        # self.model = nn.Sequential(self.normalize)
-        self.model = nn.Sequential()
+        self.normalize = Normalize()
+        self.model = nn.Sequential(self.normalize)
+        # self.model = nn.Sequential()
 
         pool_idx, conv_idx, relu_idx, bn_idx = (1, 1, 1, 1)
         style_loss_idx, content_loss_idx = (1, 1)
@@ -59,7 +57,9 @@ class LossNetwork(nn.Module):
             if name in style_layers:
                 target_style = self.model(style).detach()
                 style_loss = StyleLoss(target_style)
-                self.model.add_module(f"style_loss_{style_loss_idx}", style_loss)
+                self.model.add_module(
+                    f"style_loss_{style_loss_idx}", style_loss
+                )
                 self.style_losses.append(style_loss)
                 style_loss_idx += 1
 
@@ -68,7 +68,9 @@ class LossNetwork(nn.Module):
                 content_loss = ContentLoss(
                     target_content_dummy, copy.deepcopy(self.model)
                 )
-                self.model.add_module(f"content_loss_{content_loss_idx}", content_loss)
+                self.model.add_module(
+                    f"content_loss_{content_loss_idx}", content_loss
+                )
                 self.content_losses.append(content_loss)
                 content_loss_idx += 1
 
@@ -104,7 +106,9 @@ class Normalize(nn.Module):
 def compute_gram_matrix(inputs):
     batch_size, cnn_channels, height, width = inputs.size()
     features = inputs.view(batch_size, cnn_channels, height * width)
-    return features.bmm(features.transpose(1, 2)).div(cnn_channels * height * width)
+    return features.bmm(features.transpose(1, 2)).div(
+        cnn_channels * height * width
+    )
 
 
 class ContentLoss(nn.Module):
@@ -133,6 +137,10 @@ class StyleLoss(nn.Module):
 
 
 def calculate_total_variation_loss(inputs):
-    tv_height = torch.sum(torch.square(inputs[:, :, 1:, :] - inputs[:, :, :-1, :]))
-    tv_width = torch.sum(torch.square(inputs[:, :, :, 1:] - inputs[:, :, :, :-1]))
+    tv_height = torch.sum(
+        torch.square(inputs[:, :, 1:, :] - inputs[:, :, :-1, :])
+    )
+    tv_width = torch.sum(
+        torch.square(inputs[:, :, :, 1:] - inputs[:, :, :, :-1])
+    )
     return tv_width + tv_height
