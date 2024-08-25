@@ -63,8 +63,11 @@ class LossNetwork(nn.Module):
                 style_loss_idx += 1
 
             if name in content_layers:
+                target_content = self.model(
+                    torch.zeros_like(style).detach()
+                ).detach()
                 content_loss = ContentLoss(
-                    torch.zeros_like(style).detach(), copy.deepcopy(self.model)
+                    target_content, copy.deepcopy(self.model)
                 )
                 self.model.add_module(
                     f"content_loss_{content_loss_idx}", content_loss
