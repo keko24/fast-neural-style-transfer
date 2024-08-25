@@ -21,7 +21,6 @@ class LossNetwork(nn.Module):
 
         self.normalize = Normalize()
         self.model = nn.Sequential(self.normalize)
-        # self.model = nn.Sequential()
 
         pool_idx, conv_idx, relu_idx, bn_idx = (1, 1, 1, 1)
         style_loss_idx, content_loss_idx = (1, 1)
@@ -64,9 +63,8 @@ class LossNetwork(nn.Module):
                 style_loss_idx += 1
 
             if name in content_layers:
-                target_content_dummy = self.model(style).detach()
                 content_loss = ContentLoss(
-                    target_content_dummy, copy.deepcopy(self.model)
+                    torch.zeros_like(style).detach(), copy.deepcopy(self.model)
                 )
                 self.model.add_module(
                     f"content_loss_{content_loss_idx}", content_loss
@@ -84,7 +82,6 @@ class LossNetwork(nn.Module):
     def forward(self, inputs, content):
         for content_loss in self.content_losses:
             content_loss.set_targets(content)
-
         return self.model(inputs)
 
 
@@ -100,7 +97,7 @@ class Normalize(nn.Module):
         )
 
     def forward(self, x):
-        return self.normalize(x)
+        return self.normalize(x.div(255))
 
 
 def compute_gram_matrix(inputs):
