@@ -45,3 +45,18 @@ def load_style(path, batch_size, DEVICE):
     style = preprocessor(style)
     style = torch.stack([style] * batch_size, dim=0).to(DEVICE)
     return style
+
+
+class Normalize(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.normalize = transforms.Compose(
+            [
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+    def forward(self, x):
+        return self.normalize(x.div(255))

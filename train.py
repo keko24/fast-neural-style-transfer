@@ -2,12 +2,16 @@ import time
 
 from tqdm import tqdm
 
-from loss import calculate_total_variation_loss
+from loss import (
+    calculate_content_loss,
+    calculate_style_loss,
+    calculate_total_variation_loss,
+)
 
 
 class Trainer:
     def __init__(
-        self, data, model, loss_network, optimizer, setup, DEVICE
+        self, data, style, model, loss_network, optimizer, setup, DEVICE
     ) -> None:
         super(Trainer, self).__init__()
         self.DEVICE = DEVICE
@@ -16,6 +20,7 @@ class Trainer:
         self.optimizer = optimizer
         self.loss_network = loss_network
         self.setup = setup
+        self.style_outputs = style
 
     def train(self) -> None:
         for epoch in range(self.setup["epochs"]):
@@ -28,16 +33,26 @@ class Trainer:
 
                 self.optimizer.zero_grad()
                 y_pred = self.model(inputs)
-                self.loss_network(y_pred, inputs)
+
+                pred_outputs = self.loss_network(y_pred)
+                orig_outputs = self.loss_network(inputs)
 
                 content_loss = 0
-                for cl in self.loss_network.content_losses:
-                    content_loss += cl.loss
+                for pred_output, content_output in zip(
+                    pred_outputs.content_outputs, orig_outputs.content_outputs
+                ):
+                    content_loss += calculate_content_loss(
+                        pred_output, content_output
+                    )
                 content_loss *= self.setup["content_weight"]
 
                 style_loss = 0
-                for sl in self.loss_network.style_losses:
-                    style_loss += sl.loss
+                for pred_output, style_output in zip(
+                    pred_outputs.style_outputs, self.style_outputs
+                ):
+                    style_loss += calculate_style_loss(
+                        pred_output, style_output
+                    )
                 style_loss *= self.setup["style_weight"]
 
                 tv_loss = self.setup[

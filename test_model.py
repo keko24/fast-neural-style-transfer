@@ -12,9 +12,13 @@ from utils import get_project_root, load_json, load_style
 
 if __name__ == "__main__":
     paths = {
-        "setup_path": os.path.join(get_project_root(), "setup_files", "setup.json"),
+        "setup_path": os.path.join(
+            get_project_root(), "setup_files", "setup.json"
+        ),
         "data_path": os.path.join(get_project_root(), "data", "content"),
-        "style_path": os.path.join(get_project_root(), "data", "style", "style.jpg"),
+        "style_path": os.path.join(
+            get_project_root(), "data", "style", "style.jpg"
+        ),
         "results_path": os.path.join(get_project_root(), "results"),
     }
     setup = load_json(paths["setup_path"])
@@ -25,13 +29,18 @@ if __name__ == "__main__":
     transform = Preprocess()
     model = TransformationNetwork()
     model.to(DEVICE)
-    loss_network = LossNetwork(style, DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=setup["lr"])
-    trainer = Trainer(data, model, loss_network, optimizer, setup, DEVICE)
+    loss_network = LossNetwork(DEVICE)
+    style_outputs = loss_network(style).style_outputs
+    trainer = Trainer(
+        data, style_outputs, model, loss_network, optimizer, setup, DEVICE
+    )
     trainer.train()
 
     style = style[0].detach().cpu().clone().squeeze(0)
     style = to_pil_image(style)
     os.makedirs(paths["results_path"], exist_ok=True)
     style.save(os.path.join("results", "style.jpg"))
-    torch.save(model.state_dict(), os.path.join(paths["results_path"], "model.pt"))
+    torch.save(
+        model.state_dict(), os.path.join(paths["results_path"], "model.pt")
+    )
