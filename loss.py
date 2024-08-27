@@ -93,8 +93,8 @@ def compute_gram_matrix(inputs):
 
 def calculate_style_loss(inputs, targets):
     inputs_gram, targets_gram = (
-        compute_gram_matrix(inputs).detach(),
-        compute_gram_matrix(targets).detach(),
+        compute_gram_matrix(inputs),
+        compute_gram_matrix(targets),
     )
     return mse_loss(inputs_gram, targets_gram)
 

@@ -12,7 +12,10 @@ class ImageDataLoader:
 
     def train_data(self):
         train_loader = DataLoader(
-            self.data, batch_size=self.setup["batch_size"], shuffle=True, drop_last=True
+            self.data,
+            batch_size=self.setup["batch_size"],
+            shuffle=True,
+            drop_last=True,
         )
         return train_loader
 

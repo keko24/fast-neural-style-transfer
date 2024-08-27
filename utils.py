@@ -47,6 +47,13 @@ def load_style(path, batch_size, DEVICE):
     return style
 
 
+def save_image(image, path):
+    image = image.detach().cpu().clamp(0, 255).numpy()
+    image = image.transpose(1, 2, 0).astype("uint8")
+    image = Image.fromarray(image)
+    image.save(path)
+
+
 class Normalize(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
