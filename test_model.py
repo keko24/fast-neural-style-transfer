@@ -27,11 +27,8 @@ if __name__ == "__main__":
     model = TransformationNetwork()
     model.to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=setup["lr"])
-    loss_network = LossNetwork(DEVICE)
-    style_outputs = loss_network(style).style_outputs
-    trainer = Trainer(
-        data, style_outputs, model, loss_network, optimizer, setup, DEVICE
-    )
+    loss_network = LossNetwork(style, DEVICE)
+    trainer = Trainer(data, model, loss_network, optimizer, setup, DEVICE)
     trainer.train()
 
     os.makedirs(paths["results_path"], exist_ok=True)
