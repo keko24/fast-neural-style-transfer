@@ -69,12 +69,10 @@ class TransformationNetwork(nn.Module):
         )
 
     def forward(self, x):
-        print(x.max())
         x = self.convolutional_downsampling(x)
         for _ in range(self.num_residual_blocks):
             residual = x
             x = self.residual_block(x)
             x += residual
         x = self.convolutional_upsampling(x)
-        print(x.max())
         return x
